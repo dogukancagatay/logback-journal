@@ -6,7 +6,7 @@
     <groupId>com.dgkncgty</groupId>
     <artifactId>logback-journal</artifactId>
     <version>0.4.0-SNAPSHOT</version>
-    <packaging>bundle</packaging>
+    <packaging>jar</packaging>
     <description>systemd journal appender for logback</description>
     <url>https://github.com/dogukancagatay/logback-journal</url>
     <licenses>
@@ -49,19 +49,6 @@
     </distributionManagement>
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>5.1.9</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Export-Package>com.dgkncgty.logback</Export-Package>
-                        <Private-Package></Private-Package>
-                        <Bundle-SymbolicName>com.dgkncgty.logback.journal</Bundle-SymbolicName>
-                    </instructions>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
