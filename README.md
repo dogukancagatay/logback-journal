@@ -13,13 +13,13 @@ This appender is published in sonatype maven repository. If you are using maven,
 <dependency>
   <groupId>com.dgkncgty</groupId>
   <artifactId>logback-journal</artifactId>
-  <version>0.4.0-SNAPSHOT</version>
+  <version>0.4.0</version>
 </dependency>
 ```
 
 if you are using sbt, add this to your `build.sbt`
 ```scala
-libraryDependencies += "com.dgkncgty" % "logback-journal" % "0.4.0-SNAPSHOT"
+libraryDependencies += "com.dgkncgty" % "logback-journal" % "0.4.0"
 ```
 
 You also need the systemd journal library installed on your system to log to it. For newest version of systemd, journal is integrated in the systemd base library. Older version had a separate library named `systemd-journal`.
