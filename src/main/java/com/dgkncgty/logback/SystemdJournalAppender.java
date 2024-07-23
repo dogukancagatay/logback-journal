@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gnieh.logback;
+package com.dgkncgty.logback;
 
 import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;

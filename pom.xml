@@ -3,12 +3,12 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.gnieh</groupId>
+    <groupId>com.dgkncgty</groupId>
     <artifactId>logback-journal</artifactId>
     <version>0.4.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
     <description>systemd journal appender for logback</description>
-    <url>https://github.com/gnieh/logback-journal</url>
+    <url>https://github.com/dogukancagatay/logback-journal</url>
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -17,26 +17,20 @@
         </license>
     </licenses>
     <name>logback-journal</name>
-    <organization>
-        <name>org.gnieh</name>
-        <url>https://github.com/gnieh/logback-journal</url>
-    </organization>
     <scm>
-        <url>https://github.com/gnieh/logback-journal</url>
-        <connection>scm:git:git://github.com/gnieh/logback-journal.git</connection>
-        <developerConnection>scm:git:git@github.com:gnieh/logback-journal.git</developerConnection>
-        <tag>HEAD</tag>
+        <url>https://github.com/dogukancagatay/logback-journal</url>
+        <connection>scm:git:git://github.com/dogukancagatay/logback-journal.git</connection>
+        <developerConnection>scm:git:ssh@github.com:dogukancagatay/logback-journal.git</developerConnection>
     </scm>
     <developers>
         <developer>
-            <id>satabin</id>
-            <name>Lucas Satabin</name>
-            <email>lucas.satabin@gnieh.org</email>
+            <name>Doğukan Çağatay</name>
+            <email>dcagatay@gmail.com</email>
         </developer>
     </developers>
     <issueManagement>
         <system>github</system>
-        <url>https://github.com/gnieh/logback-journal/issues</url>
+        <url>https://github.com/dogukancagatay/logback-journal/issues</url>
     </issueManagement>
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -62,9 +56,9 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Export-Package>org.gnieh.logback</Export-Package>
+                        <Export-Package>com.dgkncgty.logback</Export-Package>
                         <Private-Package></Private-Package>
-                        <Bundle-SymbolicName>org.gnieh.logback.journal</Bundle-SymbolicName>
+                        <Bundle-SymbolicName>com.dgkncgty.logback.journal</Bundle-SymbolicName>
                     </instructions>
                 </configuration>
             </plugin>

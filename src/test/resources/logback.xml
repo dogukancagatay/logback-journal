@@ -1,6 +1,6 @@
 <configuration>
 
-  <appender name="journal" class="org.gnieh.logback.SystemdJournalAppender">
+  <appender name="journal" class="com.dgkncgty.logback.SystemdJournalAppender">
     <logLocation>false</logLocation>
     <logException>false</logException>
     <logThreadName>true</logThreadName>
@@ -10,7 +10,7 @@
     <syslogIdentifier>logback-journal-test</syslogIdentifier>
   </appender>
 
-  <appender name="journal-with-source" class="org.gnieh.logback.SystemdJournalAppender">
+  <appender name="journal-with-source" class="com.dgkncgty.logback.SystemdJournalAppender">
     <logSourceLocation>true</logSourceLocation>
     <logThreadName>true</logThreadName>
     <logLoggerName>true</logLoggerName>
@@ -25,7 +25,7 @@
     <appender-ref ref="journal-with-source" />
   </logger>
 
-  <logger name="org.gnieh.logback" level="debug">
+  <logger name="com.dgkncgty.logback" level="debug">
     <appender-ref ref="journal" />
   </logger>
 </configuration>

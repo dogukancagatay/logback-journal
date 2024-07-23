@@ -1,4 +1,4 @@
-package org.gnieh.logback;
+package com.dgkncgty.logback;
 
 import org.junit.After;
 import org.junit.Test;

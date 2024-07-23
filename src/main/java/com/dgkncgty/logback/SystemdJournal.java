@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gnieh.logback;
+package com.dgkncgty.logback;
 
-import com.sun.jna.Library;
-import com.sun.jna.Native;
+import org.slf4j.MDC;
 
 /**
- * Binding to the native journald library.
+ * Some constants that can be used to log some specific data. These constants
+ * are used as keys in {@link MDC}.
  * 
  * @author Lucas Satabin
  * 
  */
-public interface SystemdJournalLibrary extends Library {
+public class SystemdJournal {
 
-    SystemdJournalLibrary INSTANCE = (SystemdJournalLibrary) Native
-            .loadLibrary(System.getProperty("systemd.library", "systemd"), SystemdJournalLibrary.class);
+    private SystemdJournal() {
+        // cannot be instantiated
+    }
 
-    int sd_journal_print(int priority, String format, Object... args);
-
-    int sd_journal_send(String format, Object... args);
-
-    int sd_journal_perror(String message);
+    /** The MESSAGE_ID used for messages logged in this thread */
+    public static String MESSAGE_ID = "MESSAGE_ID";
 
 }
