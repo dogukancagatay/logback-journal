@@ -1,4 +1,4 @@
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.gnieh/logback-journal/badge.svg)](http://maven-badges.herokuapp.com/maven-central/org.gnieh/logback-journal)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.dgkncgty/logback-journal/badge.svg)](http://maven-badges.herokuapp.com/maven-central/com.dgkncgty/logback-journal)
 
 logback-journal
 ===============
@@ -11,15 +11,15 @@ Installation
 This appender is published in sonatype maven repository. If you are using maven, simply add the following in your `pom.xml`
 ```xml
 <dependency>
-  <groupId>org.gnieh</groupId>
+  <groupId>com.dgkncgty</groupId>
   <artifactId>logback-journal</artifactId>
-  <version>0.3.0</version>
+  <version>0.4.0-SNAPSHOT</version>
 </dependency>
 ```
 
 if you are using sbt, add this to your `build.sbt`
 ```scala
-libraryDependencies += "org.gnieh" % "logback-journal" % "0.3.0"
+libraryDependencies += "com.dgkncgty" % "logback-journal" % "0.4.0-SNAPSHOT"
 ```
 
 You also need the systemd journal library installed on your system to log to it. For newest version of systemd, journal is integrated in the systemd base library. Older version had a separate library named `systemd-journal`.
@@ -32,7 +32,7 @@ Basic configuration to use the systemd journal appender looks like this:
 ```xml
 <configuration>
 
-  <appender name="journal" class="org.gnieh.logback.SystemdJournalAppender" />
+  <appender name="journal" class="com.dgkncgty.logback.SystemdJournalAppender" />
 
   <root level="debug">
     <appender-ref ref="journal" />
