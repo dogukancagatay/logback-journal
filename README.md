@@ -1,12 +1,10 @@
 [![Maven Central Version](https://img.shields.io/maven-central/v/com.dgkncgty/logback-journal)](https://central.sonatype.com/artifact/com.dgkncgty/logback-journal)
 
-logback-journal
-===============
+# logback-journal
 
 [systemd](http://freedesktop.org/wiki/Software/systemd/) journal appender for Logback.
 
-Installation
-------------
+## Installation
 
 This appender is published in sonatype maven repository. If you are using maven, simply add the following in your `pom.xml`
 ```xml
@@ -22,11 +20,12 @@ if you are using sbt, add this to your `build.sbt`
 libraryDependencies += "com.dgkncgty" % "logback-journal" % "0.4.0"
 ```
 
-You also need the systemd journal library installed on your system to log to it. For newest version of systemd, journal is integrated in the systemd base library. Older version had a separate library named `systemd-journal`.
+You also need the systemd journal library installed on your system to log to it.
+
+For newest version of systemd, journal is integrated in the systemd base library. Older version had a separate library named `systemd-journal`.
 This appender use `systemd` as a library by default. You can change this by using the `systemd.library` JVM property (e.g. `-Dsystemd.library=systemd-journal`)
 
-Configuration
--------------
+## Configuration
 
 Basic configuration to use the systemd journal appender looks like this:
 ```xml
