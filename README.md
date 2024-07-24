@@ -1,4 +1,4 @@
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.dgkncgty/logback-journal/badge.svg)](http://maven-badges.herokuapp.com/maven-central/com.dgkncgty/logback-journal)
+[![Maven Central Version](https://img.shields.io/maven-central/v/com.dgkncgty/logback-journal)](https://central.sonatype.com/artifact/com.dgkncgty/logback-journal)
 
 logback-journal
 ===============
