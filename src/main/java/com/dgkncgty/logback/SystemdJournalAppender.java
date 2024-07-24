@@ -17,6 +17,7 @@ package com.dgkncgty.logback;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.core.encoder.Encoder;
@@ -96,11 +97,29 @@ public class SystemdJournalAppender extends AppenderBase<ILoggingEvent> {
                     // if one wants to log the exception stack trace, just do it
                     if (logStackTrace) {
                         messages.add("EXN_STACKTRACE=%s");
+
+                        // The main exception
                         StringWriter stacktrace = new StringWriter();
                         for (StackTraceElementProxy st : stack) {
                             stacktrace.write(st.getSTEAsString());
                             stacktrace.write('\n');
                         }
+
+                        // Go down the caused by chain
+                        IThrowableProxy cause = event.getThrowableProxy().getCause();
+                        while (cause != null) {
+                            stacktrace.write("Caused by: ");
+                            stacktrace.write(cause.getClassName());
+                            stacktrace.write(": ");
+                            stacktrace.write(cause.getMessage());
+                            stacktrace.write("\n");
+                            for (StackTraceElementProxy st : cause.getStackTraceElementProxyArray()) {
+                                stacktrace.write(st.getSTEAsString());
+                                stacktrace.write('\n');
+                            }
+                            cause = cause.getCause();
+                        }
+
                         messages.add(stacktrace.toString());
                     }
                 }
