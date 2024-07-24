@@ -17,6 +17,11 @@ If you are using Maven, simply add the following in your `pom.xml`
 </dependency>
 ```
 
+If you are using Gradle, add this to your `build.gradle`
+```groovy
+implementation 'com.dgkncgty:logback-journal:0.4.0'
+```
+
 if you are using sbt, add this to your `build.sbt`
 ```scala
 libraryDependencies += "com.dgkncgty" % "logback-journal" % "0.4.0"
