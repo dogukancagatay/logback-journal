@@ -6,7 +6,9 @@
 
 ## Installation
 
-This appender is published in sonatype maven repository. If you are using maven, simply add the following in your `pom.xml`
+`logback-journal` appender is published in [Sonatype Maven Central Repository](https://central.sonatype.com/artifact/com.dgkncgty/logback-journal).
+
+If you are using Maven, simply add the following in your `pom.xml`
 ```xml
 <dependency>
   <groupId>com.dgkncgty</groupId>
