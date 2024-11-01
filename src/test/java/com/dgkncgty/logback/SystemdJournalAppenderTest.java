@@ -71,5 +71,13 @@ public class SystemdJournalAppenderTest {
         logWithSource.error("some exception", exception);
     }
 
+    @Test
+    public void testLogWithSourceAndNestedException() {
+        Exception exception = new RuntimeException("some exception");
+        Exception exception1 = new Exception("nested exception 1", exception);
+        Exception exception2 = new Exception("nested exception 2", exception1);
+        Exception exception3 = new Exception("nested exception 3", exception2);
+        logWithSource.error("an exception occurred ", exception3);
+    }
 
 }
