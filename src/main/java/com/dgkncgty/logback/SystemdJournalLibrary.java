@@ -26,7 +26,7 @@ import com.sun.jna.Native;
 public interface SystemdJournalLibrary extends Library {
 
     SystemdJournalLibrary INSTANCE = Native
-            .loadLibrary(System.getProperty("systemd.library", "systemd"), SystemdJournalLibrary.class);
+            .load(System.getProperty("systemd.library", "systemd"), SystemdJournalLibrary.class);
 
     int sd_journal_print(int priority, String format, Object... args);
 
