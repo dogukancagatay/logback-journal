@@ -1,0 +1,37 @@
+name: Release Build and Publish
+
+on:
+  release:
+    types: [created]
+
+env:
+  JAVA_VERSION: "8"
+  MAVEN_PROFILE: "gh-action"
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: "temurin"
+        cache: maven
+        server-id: central # Value of the publishingServerId of central-publishing-maven-plugin plugin of the pom.xml
+        server-username: MAVEN_USERNAME # env Value of the server username in the settings.xml
+        server-password: MAVEN_CENTRAL_TOKEN # env Value of the server password in the settings.xml
+        gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }} # Value of armored the private key
+        gpg-passphrase: MAVEN_GPG_PASSPHRASE # env Value of the server password in the settings.xml
+
+    - name: Publish package to Sonatype Maven Central
+      run: mvn -B -P ${{ env.MAVEN_PROFILE }} -Dgpg.keyname=${{ secrets.MAVEN_GPG_KEYNAME }} deploy
+      env:
+        MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+        MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
+        MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+
