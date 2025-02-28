@@ -174,7 +174,7 @@ public class SystemdJournalAppender extends AppenderBase<ILoggingEvent> {
 
             journald.sd_journal_send("MESSAGE=%s", messages.toArray());
         } catch (Exception e) {
-            e.printStackTrace();
+            addError("Failed to append event to systemd journal", e);
         }
     }
 
