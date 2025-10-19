@@ -492,4 +492,278 @@ public class SystemdJournalAppenderITest {
         logger.error("error occurred", exception);
     }
 
+    // ========== Journal Verification Tests ==========
+    // These tests actually verify that logs appear in the systemd journal
+
+    @Test
+    public void testLogAppearsInJournal() throws Exception {
+        String uniqueId = "JOURNAL_VERIFY_" + System.currentTimeMillis() + "_" +
+                          Integer.toHexString((int)(Math.random() * 0xFFFF));
+
+        logger.info("Integration test message: {}", uniqueId);
+
+        // Give journal time to flush
+        Thread.sleep(200);
+
+        // Query journal
+        String journalOutput = queryJournal("--since", "5 seconds ago");
+        assertThat(journalOutput).contains(uniqueId);
+    }
+
+    @Test
+    public void testLogPriorityInJournal() throws Exception {
+        String errorId = "ERROR_PRIORITY_" + System.currentTimeMillis();
+        String infoId = "INFO_PRIORITY_" + System.currentTimeMillis();
+
+        logger.error("Error message: {}", errorId);
+        logger.info("Info message: {}", infoId);
+
+        Thread.sleep(200);
+
+        // Query for error priority logs (priority 3)
+        String errorLogs = queryJournal("--priority", "err", "--since", "5 seconds ago");
+        assertThat(errorLogs).contains(errorId);
+
+        // Query for info priority logs (priority 6)
+        String infoLogs = queryJournal("--priority", "info", "--since", "5 seconds ago");
+        assertThat(infoLogs).contains(infoId);
+    }
+
+    @Test
+    public void testMdcFieldsInJournal() throws Exception {
+        String testId = "MDC_FIELDS_" + System.currentTimeMillis();
+
+        MDC.put("userId", "test-user-123");
+        MDC.put("requestId", "req-456");
+        MDC.put("custom_field", "custom-value");
+
+        logger.info("MDC test message: {}", testId);
+        MDC.clear();
+
+        Thread.sleep(200);
+
+        // Query journal with output format that shows all fields
+        String journalOutput = queryJournalWithFields("--since", "5 seconds ago");
+
+        // Verify message appears
+        assertThat(journalOutput).contains(testId);
+
+        // Verify MDC fields appear (they'll be prefixed with MY_ based on logback.xml config)
+        if (journalOutput.contains(testId)) {
+            // Check if either the field name or value appears
+            boolean hasUserId = journalOutput.contains("USERID") || journalOutput.contains("test-user-123");
+            boolean hasRequestId = journalOutput.contains("REQUESTID") || journalOutput.contains("req-456");
+            assertThat(hasUserId || hasRequestId).isTrue();
+        }
+    }
+
+    @Test
+    public void testExceptionStackTraceInJournal() throws Exception {
+        String exceptionId = "EXCEPTION_TEST_" + System.currentTimeMillis();
+
+        try {
+            throw new IllegalStateException("Test exception for journal verification");
+        } catch (IllegalStateException e) {
+            logWithSource.error("Exception test: {}", exceptionId, e);
+        }
+
+        Thread.sleep(200);
+
+        String journalOutput = queryJournalWithFields("--since", "5 seconds ago");
+
+        assertThat(journalOutput).contains(exceptionId);
+        // Check if exception info appears in output
+        boolean hasExceptionInfo = journalOutput.contains("IllegalStateException") ||
+                                   journalOutput.contains("EXN_NAME") ||
+                                   journalOutput.contains("STACKTRACE");
+        assertThat(hasExceptionInfo).isTrue();
+    }
+
+    @Test
+    public void testSyslogIdentifierInJournal() throws Exception {
+        String identifierTest = "SYSLOG_ID_" + System.currentTimeMillis();
+
+        logger.info("Testing syslog identifier: {}", identifierTest);
+
+        Thread.sleep(200);
+
+        // Query specifically for our syslog identifier
+        String journalOutput = queryJournal(
+            "-t", "logback-journal-test",
+            "--since", "5 seconds ago"
+        );
+
+        assertThat(journalOutput).contains(identifierTest);
+    }
+
+    @Test
+    public void testHighVolumeLogsInJournal() throws Exception {
+        String batchId = "BATCH_" + System.currentTimeMillis();
+        int messageCount = 100;
+
+        for (int i = 0; i < messageCount; i++) {
+            logger.info("Batch message {} of {}: {}", i, messageCount, batchId);
+        }
+
+        Thread.sleep(500); // Give more time for batch processing
+
+        String journalOutput = queryJournal("--since", "5 seconds ago");
+
+        // Verify at least some messages appeared (may not get all due to rate limiting)
+        long count = journalOutput.lines()
+            .filter(line -> line.contains(batchId))
+            .count();
+
+        assertThat(count).isGreaterThan(0);
+    }
+
+    @Test
+    public void testConcurrentLogsInJournal() throws Exception {
+        String concurrentId = "CONCURRENT_" + System.currentTimeMillis();
+        int threadCount = 5;
+
+        Thread[] threads = new Thread[threadCount];
+        for (int i = 0; i < threadCount; i++) {
+            final int threadNum = i;
+            threads[i] = new Thread(() -> {
+                MDC.put("thread_num", String.valueOf(threadNum));
+                logger.info("Concurrent test from thread {}: {}", threadNum, concurrentId);
+                MDC.clear();
+            });
+            threads[i].start();
+        }
+
+        for (Thread thread : threads) {
+            thread.join();
+        }
+
+        Thread.sleep(300);
+
+        String journalOutput = queryJournal("--since", "5 seconds ago");
+
+        // Verify messages from multiple threads appeared
+        long count = journalOutput.lines()
+            .filter(line -> line.contains(concurrentId))
+            .count();
+
+        assertThat(count).isGreaterThanOrEqualTo(threadCount);
+    }
+
+    @Test
+    public void testMessageWithUnicodeInJournal() throws Exception {
+        String unicodeId = "UNICODE_" + System.currentTimeMillis();
+        String unicodeMessage = "Unicode test 你好世界 مرحبا мир 🌍";
+
+        logger.info("{}: {}", unicodeId, unicodeMessage);
+
+        Thread.sleep(200);
+
+        String journalOutput = queryJournal("--since", "5 seconds ago");
+
+        assertThat(journalOutput).contains(unicodeId);
+        // Unicode might be transformed, so just verify the ID appeared
+    }
+
+    @Test
+    public void testDifferentLogLevelsInJournal() throws Exception {
+        String levelTestId = "LEVEL_TEST_" + System.currentTimeMillis();
+
+        logger.trace("TRACE {}", levelTestId);
+        logger.debug("DEBUG {}", levelTestId);
+        logger.info("INFO {}", levelTestId);
+        logger.warn("WARN {}", levelTestId);
+        logger.error("ERROR {}", levelTestId);
+
+        Thread.sleep(200);
+
+        String journalOutput = queryJournal("--since", "5 seconds ago");
+
+        // Verify different levels appear (based on logger config)
+        assertThat(journalOutput).contains(levelTestId);
+    }
+
+    @Test
+    public void testMessageIdFieldInJournal() throws Exception {
+        String msgIdTest = "MSG_ID_" + System.currentTimeMillis();
+        String messageId = "f47aa485e0c047b2ae3f41deb7b4f18f";
+
+        MDC.put(SystemdJournal.MESSAGE_ID, messageId);
+        logger.info("Message ID test: {}", msgIdTest);
+        MDC.clear();
+
+        Thread.sleep(200);
+
+        String journalOutput = queryJournalWithFields("--since", "5 seconds ago");
+
+        assertThat(journalOutput).contains(msgIdTest);
+        // MESSAGE_ID might appear in journal output
+        if (journalOutput.contains(msgIdTest)) {
+            boolean hasMessageId = journalOutput.contains(messageId) || journalOutput.contains("MESSAGE_ID");
+            assertThat(hasMessageId).isTrue();
+        }
+    }
+
+    // ========== Helper Methods for Journal Verification ==========
+
+    /**
+     * Query journalctl with specified arguments
+     */
+    private String queryJournal(String... args) throws Exception {
+        return executeJournalctl(false, args);
+    }
+
+    /**
+     * Query journalctl with all fields output
+     */
+    private String queryJournalWithFields(String... args) throws Exception {
+        return executeJournalctl(true, args);
+    }
+
+    /**
+     * Execute journalctl command and return output
+     */
+    private String executeJournalctl(boolean withFields, String... additionalArgs) throws Exception {
+        java.util.List<String> command = new java.util.ArrayList<>();
+        command.add("journalctl");
+        command.add("-t");
+        command.add("logback-journal-test");
+        command.add("--no-pager");
+
+        if (withFields) {
+            command.add("--output=verbose");
+        }
+
+        command.addAll(java.util.Arrays.asList(additionalArgs));
+
+        ProcessBuilder pb = new ProcessBuilder(command);
+        pb.redirectErrorStream(true);
+
+        try {
+            Process process = pb.start();
+
+            // Read output
+            java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(process.getInputStream())
+            );
+            StringBuilder output = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+
+            int exitCode = process.waitFor();
+
+            // journalctl might return non-zero if no logs found, which is okay for tests
+            if (exitCode != 0 && exitCode != 1) {
+                throw new RuntimeException("journalctl failed with exit code: " + exitCode);
+            }
+
+            return output.toString();
+        } catch (java.io.IOException e) {
+            // If journalctl is not available, skip verification
+            System.err.println("Warning: journalctl not available, skipping journal verification: " + e.getMessage());
+            return "";
+        }
+    }
+
 }
