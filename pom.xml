@@ -121,7 +121,7 @@
                     <publishingServerId>central</publishingServerId>
                     <skipPublishing>${package.skipPublishing}</skipPublishing>
                     <autoPublish>${package.autoPublish}</autoPublish>
-                    <waitUntil>published</waitUntil>
+                    <waitUntil>validated</waitUntil>
                 </configuration>
             </plugin>
         </plugins>
