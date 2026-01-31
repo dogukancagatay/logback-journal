@@ -5,7 +5,7 @@ on:
     types: [published]
 
 env:
-  JAVA_VERSION: "8"
+  JAVA_VERSION: "11"
   MAVEN_PROFILE: "gh-action"
 
 jobs:
