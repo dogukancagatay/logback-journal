@@ -77,7 +77,7 @@ public class SystemdJournalAppender extends AppenderBase<ILoggingEvent> {
 
             if (hasException(event)) {
                 StackTraceElementProxy[] stack = event.getThrowableProxy().getStackTraceElementProxyArray();
-                if (stack.length > 0) {
+                if (stack != null && stack.length > 0) {
 
                     // the location information if any is available and it is
                     // enabled
