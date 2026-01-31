@@ -13,18 +13,18 @@ If you are using Maven, simply add the following in your `pom.xml`
 <dependency>
   <groupId>com.dgkncgty</groupId>
   <artifactId>logback-journal</artifactId>
-  <version>0.5.0</version>
+  <version>0.5.1</version>
 </dependency>
 ```
 
 If you are using Gradle, add this to your `build.gradle`
 ```groovy
-implementation 'com.dgkncgty:logback-journal:0.5.0'
+implementation 'com.dgkncgty:logback-journal:0.5.1'
 ```
 
 if you are using sbt, add this to your `build.sbt`
 ```scala
-libraryDependencies += "com.dgkncgty" % "logback-journal" % "0.5.0"
+libraryDependencies += "com.dgkncgty" % "logback-journal" % "0.5.1"
 ```
 
 You also need the systemd journal library installed on your system to log to it.
