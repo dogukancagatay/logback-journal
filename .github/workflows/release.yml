@@ -2,7 +2,7 @@ name: Release Build and Publish
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 env:
   JAVA_VERSION: "8"
