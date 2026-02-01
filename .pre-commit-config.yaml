@@ -22,27 +22,27 @@ repos:
         name: Spotless Apply
         entry: mvn spotless:apply -q
         language: system
-        types: [java]
+        always_run: true
         pass_filenames: false
 
       - id: maven-validate
         name: Maven Validate
         entry: mvn validate -q
         language: system
-        types: [java]
+        always_run: true
         pass_filenames: false
 
       - id: maven-compile
         name: Maven Compile
         entry: mvn compile -q -DskipTests
         language: system
-        types: [java]
+        always_run: true
         pass_filenames: false
 
       - id: maven-test
         name: Maven Test
         entry: mvn test -q
         language: system
-        types: [java]
+        always_run: true
         pass_filenames: false
         stages: [pre-push]  # Run tests only on push to save time
