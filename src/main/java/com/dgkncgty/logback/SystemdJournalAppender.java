@@ -21,7 +21,6 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.core.encoder.Encoder;
-
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,8 +63,7 @@ public class SystemdJournalAppender extends AppenderBase<ILoggingEvent> {
             List<Object> messages = new ArrayList<>();
 
             // the formatted human readable message
-            if (encoder == null)
-                messages.add(event.getFormattedMessage());
+            if (encoder == null) messages.add(event.getFormattedMessage());
             else {
                 String message = new String(encoder.encode(event));
                 messages.add(message);

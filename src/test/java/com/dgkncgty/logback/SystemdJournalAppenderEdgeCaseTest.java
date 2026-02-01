@@ -1,17 +1,16 @@
 package com.dgkncgty.logback;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for edge cases and configuration validation
@@ -229,14 +228,7 @@ public class SystemdJournalAppenderEdgeCaseTest {
     public void testLoggerNameWithDots() {
         appender.setLogLoggerName(true);
 
-        LoggingEvent event = new LoggingEvent(
-            "com.example.package.ClassName",
-            logger,
-            Level.INFO,
-            "test",
-            null,
-            null
-        );
+        LoggingEvent event = new LoggingEvent("com.example.package.ClassName", logger, Level.INFO, "test", null, null);
 
         appender.append(event);
     }
@@ -351,9 +343,8 @@ public class SystemdJournalAppenderEdgeCaseTest {
         appender.setLogSourceLocation(true);
 
         LoggingEvent event = createLoggingEvent(Level.INFO, "test", null, null);
-        StackTraceElement[] callerData = new StackTraceElement[] {
-            new StackTraceElement("com.example.MyClass", "myMethod", "MyClass.java", 100)
-        };
+        StackTraceElement[] callerData =
+                new StackTraceElement[] {new StackTraceElement("com.example.MyClass", "myMethod", "MyClass.java", 100)};
         event.setCallerData(callerData);
 
         appender.append(event);
@@ -382,14 +373,8 @@ public class SystemdJournalAppenderEdgeCaseTest {
 
     // Helper method to create logging events
     private LoggingEvent createLoggingEvent(Level level, String message, Throwable throwable, Map<String, String> mdc) {
-        LoggingEvent event = new LoggingEvent(
-            "com.dgkncgty.logback.test.TestClass",
-            logger,
-            level,
-            message,
-            throwable,
-            null
-        );
+        LoggingEvent event =
+                new LoggingEvent("com.dgkncgty.logback.test.TestClass", logger, level, message, throwable, null);
 
         if (mdc != null) {
             event.setMDCPropertyMap(mdc);

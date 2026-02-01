@@ -4,12 +4,11 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Unit tests for SystemdJournalAppender
@@ -148,9 +147,8 @@ public class SystemdJournalAppenderTest {
 
         // Create event with caller data
         LoggingEvent event = createLoggingEvent(Level.INFO, "test message", null, null);
-        StackTraceElement[] callerData = new StackTraceElement[] {
-            new StackTraceElement("com.example.MyClass", "myMethod", "MyClass.java", 42)
-        };
+        StackTraceElement[] callerData =
+                new StackTraceElement[] {new StackTraceElement("com.example.MyClass", "myMethod", "MyClass.java", 42)};
         event.setCallerData(callerData);
 
         appender.append(event);
@@ -170,7 +168,7 @@ public class SystemdJournalAppenderTest {
 
     @Test
     public void testAppendWithAllLogLevels() {
-        for (Level level : new Level[]{Level.TRACE, Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR}) {
+        for (Level level : new Level[] {Level.TRACE, Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR}) {
             LoggingEvent event = createLoggingEvent(level, "message at " + level, null, null);
             appender.append(event);
         }
@@ -349,14 +347,7 @@ public class SystemdJournalAppenderTest {
     @Test
     public void testAppendHandlesExceptionsGracefully() {
         // Create an event with a null message to potentially cause issues
-        LoggingEvent event = new LoggingEvent(
-            "com.example.Test",
-            logger,
-            Level.INFO,
-            null,
-            null,
-            null
-        );
+        LoggingEvent event = new LoggingEvent("com.example.Test", logger, Level.INFO, null, null, null);
 
         // Should not throw exception, should handle gracefully
         appender.append(event);
@@ -378,14 +369,7 @@ public class SystemdJournalAppenderTest {
 
     // Helper method to create logging events
     private LoggingEvent createLoggingEvent(Level level, String message, Throwable throwable, Map<String, String> mdc) {
-        LoggingEvent event = new LoggingEvent(
-            "com.example.TestClass",
-            logger,
-            level,
-            message,
-            throwable,
-            null
-        );
+        LoggingEvent event = new LoggingEvent("com.example.TestClass", logger, level, message, throwable, null);
 
         if (mdc != null) {
             event.setMDCPropertyMap(mdc);

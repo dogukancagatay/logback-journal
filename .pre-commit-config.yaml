@@ -1,0 +1,48 @@
+# Pre-commit hooks configuration
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+repos:
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-xml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # Maven hooks - validate pom.xml and run tests
+  - repo: local
+    hooks:
+      - id: spotless-apply
+        name: Spotless Apply
+        entry: mvn spotless:apply -q
+        language: system
+        types: [java]
+        pass_filenames: false
+
+      - id: maven-validate
+        name: Maven Validate
+        entry: mvn validate -q
+        language: system
+        types: [java]
+        pass_filenames: false
+
+      - id: maven-compile
+        name: Maven Compile
+        entry: mvn compile -q -DskipTests
+        language: system
+        types: [java]
+        pass_filenames: false
+
+      - id: maven-test
+        name: Maven Test
+        entry: mvn test -q
+        language: system
+        types: [java]
+        pass_filenames: false
+        stages: [pre-push]  # Run tests only on push to save time

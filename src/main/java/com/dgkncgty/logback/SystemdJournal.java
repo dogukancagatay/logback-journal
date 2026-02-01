@@ -33,5 +33,4 @@ public class SystemdJournal {
      * The MESSAGE_ID used for messages logged in this thread
      */
     public static String MESSAGE_ID = "MESSAGE_ID";
-
 }
