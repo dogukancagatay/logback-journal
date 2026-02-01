@@ -707,7 +707,6 @@ public class SystemdJournalAppenderITest {
     @Test
     public void testThreadNameFieldInJournal() throws Exception {
         String threadTestId = "THREAD_NAME_" + System.currentTimeMillis();
-        String expectedThreadName = Thread.currentThread().getName();
 
         logger.info("Thread name test: {}", threadTestId);
 
