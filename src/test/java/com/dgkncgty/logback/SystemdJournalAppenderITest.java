@@ -934,11 +934,14 @@ public class SystemdJournalAppenderITest {
 
         Thread.sleep(200);
 
-        String journalOutput = queryJournalWithFields("--since", "5 seconds ago");
+        // Query specifically for our test message using grep to isolate this log entry
+        String journalOutput = queryJournalWithFields("--since", "5 seconds ago", "--grep", testId);
 
         assertThat(journalOutput).contains(testId);
         // The MDC value should NOT appear since logMdc=false for logWithSource
         assertThat(journalOutput).doesNotContain(mdcKey);
+        // The MDC key (normalized to uppercase) should also NOT appear
+        assertThat(journalOutput).doesNotContain("TESTMDCKEY");
     }
 
     @Test
@@ -954,11 +957,14 @@ public class SystemdJournalAppenderITest {
 
         Thread.sleep(200);
 
-        String journalOutput = queryJournalWithFields("--since", "5 seconds ago");
+        // Query specifically for our test message using grep to isolate this log entry
+        String journalOutput = queryJournalWithFields("--since", "5 seconds ago", "--grep", testId);
 
         assertThat(journalOutput).contains(testId);
         // EXN_NAME and EXN_MESSAGE should NOT appear since logException=false
-        // Note: We check that our specific exception message doesn't appear
+        assertThat(journalOutput).doesNotContain("EXN_NAME");
+        assertThat(journalOutput).doesNotContain("EXN_MESSAGE");
+        // Also check that our specific exception message doesn't appear
         assertThat(journalOutput).doesNotContain("This should not appear");
     }
 
@@ -976,14 +982,16 @@ public class SystemdJournalAppenderITest {
 
         Thread.sleep(200);
 
-        String journalOutput = queryJournalWithFields("--since", "5 seconds ago");
+        // Query specifically for our test message using grep to isolate this log entry
+        String journalOutput = queryJournalWithFields("--since", "5 seconds ago", "--grep", testId);
 
         // The message should appear
         assertThat(journalOutput).contains(testId);
 
-        // Count occurrences - we need to check if CODE_FILE appears in context of our message
-        // This is tricky because other tests may have logged with CODE_FILE
-        // So we verify by checking the specific log doesn't have location fields nearby
+        // CODE_FILE and CODE_LINE should NOT appear since logLocation=false for main logger
+        assertThat(journalOutput).doesNotContain("CODE_FILE");
+        assertThat(journalOutput).doesNotContain("CODE_LINE");
+        assertThat(journalOutput).doesNotContain("CODE_FUNC");
     }
 
 
