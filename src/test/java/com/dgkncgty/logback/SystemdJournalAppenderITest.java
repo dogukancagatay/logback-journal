@@ -9,6 +9,7 @@ import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import ch.qos.logback.classic.PatternLayout;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,12 @@ public class SystemdJournalAppenderITest {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(SystemdJournalAppenderITest.class);
     private static final org.slf4j.Logger logWithSource = LoggerFactory.getLogger("log-with-source");
+
+    /**
+     * Flag to cache whether journalctl is available on the current system.
+     * Once determined to be unavailable, all tests using it will be skipped.
+     */
+    private static volatile boolean journalctlAvailable = true;
 
     private LoggerContext loggerContext;
     private SystemdJournalAppender appender;
@@ -723,6 +730,11 @@ public class SystemdJournalAppenderITest {
      * Execute journalctl command and return output
      */
     private String executeJournalctl(boolean withFields, String... additionalArgs) throws Exception {
+        // If journalctl was previously determined to be unavailable, skip this test.
+        if (!journalctlAvailable) {
+            Assume.assumeTrue("journalctl is not available on this system; skipping test", false);
+        }
+
         java.util.List<String> command = new java.util.ArrayList<>();
         command.add("journalctl");
         command.add("-t");
@@ -753,6 +765,12 @@ public class SystemdJournalAppenderITest {
 
             int exitCode = process.waitFor();
 
+            // Exit code 127 typically means command not found
+            if (exitCode == 127) {
+                journalctlAvailable = false;
+                Assume.assumeTrue("journalctl is not available on this system; skipping test", false);
+            }
+
             // journalctl might return non-zero if no logs found, which is okay for tests
             if (exitCode != 0 && exitCode != 1) {
                 throw new RuntimeException("journalctl failed with exit code: " + exitCode);
@@ -761,7 +779,8 @@ public class SystemdJournalAppenderITest {
             return output.toString();
         } catch (java.io.IOException e) {
             // If journalctl is not available, skip verification
-            System.err.println("Warning: journalctl not available, skipping journal verification: " + e.getMessage());
+            journalctlAvailable = false;
+            Assume.assumeTrue("journalctl is not available on this system; skipping test: " + e.getMessage(), false);
             return "";
         }
     }

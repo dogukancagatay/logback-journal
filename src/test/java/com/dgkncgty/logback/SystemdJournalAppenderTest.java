@@ -3,22 +3,12 @@ package com.dgkncgty.logback;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.classic.spi.StackTraceElementProxy;
-import ch.qos.logback.classic.spi.ThrowableProxy;
-import ch.qos.logback.core.encoder.Encoder;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for SystemdJournalAppender using mocks
@@ -32,12 +22,8 @@ public class SystemdJournalAppenderTest {
     private Logger logger;
     private SystemdJournalAppender appender;
 
-    @Mock
-    private Encoder<ILoggingEvent> mockEncoder;
-
     @Before
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
 
         loggerContext = new LoggerContext();
         logger = loggerContext.getLogger(SystemdJournalAppenderTest.class);
