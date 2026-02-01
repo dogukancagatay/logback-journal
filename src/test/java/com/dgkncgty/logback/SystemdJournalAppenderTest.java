@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -11,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Unit tests for SystemdJournalAppender using mocks
+ * Unit tests for SystemdJournalAppender
  *
  * These tests verify the internal behavior of the appender without
  * actually writing to the systemd journal.
@@ -24,13 +25,19 @@ public class SystemdJournalAppenderTest {
 
     @Before
     public void setUp() {
-
         loggerContext = new LoggerContext();
         logger = loggerContext.getLogger(SystemdJournalAppenderTest.class);
 
         appender = new SystemdJournalAppender();
         appender.setContext(loggerContext);
         appender.start();
+    }
+
+    @After
+    public void tearDown() {
+        if (appender != null && appender.isStarted()) {
+            appender.stop();
+        }
     }
 
     @Test

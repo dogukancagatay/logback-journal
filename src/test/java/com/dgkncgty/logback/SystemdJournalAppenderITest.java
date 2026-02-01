@@ -1,11 +1,7 @@
 package com.dgkncgty.logback;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import ch.qos.logback.classic.PatternLayout;
 import org.junit.After;
@@ -15,8 +11,6 @@ import org.junit.Test;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
