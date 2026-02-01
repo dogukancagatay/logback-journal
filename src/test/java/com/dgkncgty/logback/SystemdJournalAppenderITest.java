@@ -781,7 +781,7 @@ public class SystemdJournalAppenderITest {
         try {
             throw new RuntimeException("Test exception for location");
         } catch (RuntimeException e) {
-            logger.error("Exception location test: {}", exnLocationId, e);
+            logWithSource.error("Exception location test: {}", exnLocationId, e);
         }
 
         Thread.sleep(200);
