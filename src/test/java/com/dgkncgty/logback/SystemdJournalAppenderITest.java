@@ -1,18 +1,17 @@
 package com.dgkncgty.logback;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
-import ch.qos.logback.classic.PatternLayout;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for SystemdJournalAppender
@@ -498,8 +497,8 @@ public class SystemdJournalAppenderITest {
 
     @Test
     public void testLogAppearsInJournal() throws Exception {
-        String uniqueId = "JOURNAL_VERIFY_" + System.currentTimeMillis() + "_" +
-                          Integer.toHexString((int)(Math.random() * 0xFFFF));
+        String uniqueId = "JOURNAL_VERIFY_" + System.currentTimeMillis() + "_"
+                + Integer.toHexString((int) (Math.random() * 0xFFFF));
 
         logger.info("Integration test message: {}", uniqueId);
 
@@ -574,9 +573,9 @@ public class SystemdJournalAppenderITest {
 
         assertThat(journalOutput).contains(exceptionId);
         // Check if exception info appears in output
-        boolean hasExceptionInfo = journalOutput.contains("IllegalStateException") ||
-                                   journalOutput.contains("EXN_NAME") ||
-                                   journalOutput.contains("STACKTRACE");
+        boolean hasExceptionInfo = journalOutput.contains("IllegalStateException")
+                || journalOutput.contains("EXN_NAME")
+                || journalOutput.contains("STACKTRACE");
         assertThat(hasExceptionInfo).isTrue();
     }
 
@@ -590,9 +589,8 @@ public class SystemdJournalAppenderITest {
 
         // Query specifically for our syslog identifier
         String journalOutput = queryJournal(
-            "-t", "logback-journal-test",
-            "--since", "5 seconds ago"
-        );
+                "-t", "logback-journal-test",
+                "--since", "5 seconds ago");
 
         assertThat(journalOutput).contains(identifierTest);
     }
@@ -611,9 +609,8 @@ public class SystemdJournalAppenderITest {
         String journalOutput = queryJournal("--since", "5 seconds ago");
 
         // Verify at least some messages appeared (may not get all due to rate limiting)
-        long count = journalOutput.lines()
-            .filter(line -> line.contains(batchId))
-            .count();
+        long count =
+                journalOutput.lines().filter(line -> line.contains(batchId)).count();
 
         assertThat(count).isGreaterThan(0);
     }
@@ -643,9 +640,10 @@ public class SystemdJournalAppenderITest {
         String journalOutput = queryJournal("--since", "5 seconds ago");
 
         // Verify messages from multiple threads appeared
-        long count = journalOutput.lines()
-            .filter(line -> line.contains(concurrentId))
-            .count();
+        long count = journalOutput
+                .lines()
+                .filter(line -> line.contains(concurrentId))
+                .count();
 
         assertThat(count).isGreaterThanOrEqualTo(threadCount);
     }
@@ -724,9 +722,11 @@ public class SystemdJournalAppenderITest {
         String threadTestId = "CUSTOM_THREAD_" + System.currentTimeMillis();
         String customThreadName = "custom-test-thread-" + System.currentTimeMillis();
 
-        Thread customThread = new Thread(() -> {
-            logger.info("Custom thread test: {}", threadTestId);
-        }, customThreadName);
+        Thread customThread = new Thread(
+                () -> {
+                    logger.info("Custom thread test: {}", threadTestId);
+                },
+                customThreadName);
 
         customThread.start();
         customThread.join();
@@ -994,8 +994,6 @@ public class SystemdJournalAppenderITest {
         assertThat(journalOutput).doesNotContain("CODE_FUNC");
     }
 
-
-
     /**
      * Query journalctl with specified arguments
      */
@@ -1038,9 +1036,8 @@ public class SystemdJournalAppenderITest {
             Process process = pb.start();
 
             // Read output
-            java.io.BufferedReader reader = new java.io.BufferedReader(
-                new java.io.InputStreamReader(process.getInputStream())
-            );
+            java.io.BufferedReader reader =
+                    new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
             StringBuilder output = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
@@ -1068,5 +1065,4 @@ public class SystemdJournalAppenderITest {
             return "";
         }
     }
-
 }

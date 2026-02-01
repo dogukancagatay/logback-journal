@@ -25,13 +25,12 @@ import com.sun.jna.Native;
  */
 public interface SystemdJournalLibrary extends Library {
 
-    SystemdJournalLibrary INSTANCE = Native
-            .load(System.getProperty("systemd.library", "systemd"), SystemdJournalLibrary.class);
+    SystemdJournalLibrary INSTANCE =
+            Native.load(System.getProperty("systemd.library", "systemd"), SystemdJournalLibrary.class);
 
     int sd_journal_print(int priority, String format, Object... args);
 
     int sd_journal_send(String format, Object... args);
 
     int sd_journal_perror(String message);
-
 }
