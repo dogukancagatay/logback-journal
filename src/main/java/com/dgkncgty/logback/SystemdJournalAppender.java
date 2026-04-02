@@ -21,7 +21,7 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.core.encoder.Encoder;
-import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +49,8 @@ public class SystemdJournalAppender extends AppenderBase<ILoggingEvent> {
     boolean logMdc = false;
 
     String mdcKeyPrefix = "";
+
+    private String normalizedMdcKeyPrefix = "";
 
     String syslogIdentifier = "";
 
@@ -78,7 +80,7 @@ public class SystemdJournalAppender extends AppenderBase<ILoggingEvent> {
         // the formatted human readable message
         if (encoder == null) messages.add(event.getFormattedMessage());
         else {
-            String message = new String(encoder.encode(event));
+            String message = new String(encoder.encode(event), StandardCharsets.UTF_8);
             messages.add(message);
         }
 
@@ -88,52 +90,45 @@ public class SystemdJournalAppender extends AppenderBase<ILoggingEvent> {
 
         if (hasException(event)) {
             StackTraceElementProxy[] stack = event.getThrowableProxy().getStackTraceElementProxyArray();
-            if (stack != null && stack.length > 0) {
 
-                // the location information if any is available and it is
-                // enabled
-                if (logLocation) {
-                    StackTraceElement elt = stack[0].getStackTraceElement();
-                    appendLocation(messages, elt);
+            // location requires at least one stack frame
+            if (logLocation && stack != null && stack.length > 0) {
+                appendLocation(messages, stack[0].getStackTraceElement());
+            }
+
+            // exception name and message are available regardless of stack depth
+            if (logException) {
+                messages.add("EXN_NAME=%s");
+                messages.add(event.getThrowableProxy().getClassName());
+                messages.add("EXN_MESSAGE=%s");
+                messages.add(event.getThrowableProxy().getMessage());
+            }
+
+            // stack trace is only meaningful when frames are present
+            if (logStackTrace && stack != null && stack.length > 0) {
+                messages.add("EXN_STACKTRACE=%s");
+
+                StringBuilder stacktrace = new StringBuilder();
+                for (StackTraceElementProxy st : stack) {
+                    stacktrace.append(st.getSTEAsString());
+                    stacktrace.append('\n');
                 }
 
-                // if one wants to log the exception name and message, just
-                // do it
-                if (logException) {
-                    messages.add("EXN_NAME=%s");
-                    messages.add(event.getThrowableProxy().getClassName());
-                    messages.add("EXN_MESSAGE=%s");
-                    messages.add(event.getThrowableProxy().getMessage());
-                }
-
-                // if one wants to log the exception stack trace, just do it
-                if (logStackTrace) {
-                    messages.add("EXN_STACKTRACE=%s");
-
-                    // The main exception
-                    StringWriter stacktrace = new StringWriter();
-                    for (StackTraceElementProxy st : stack) {
-                        stacktrace.write(st.getSTEAsString());
-                        stacktrace.write('\n');
+                IThrowableProxy cause = event.getThrowableProxy().getCause();
+                while (cause != null) {
+                    stacktrace.append("Caused by: ");
+                    stacktrace.append(cause.getClassName());
+                    stacktrace.append(": ");
+                    stacktrace.append(Objects.toString(cause.getMessage(), ""));
+                    stacktrace.append("\n");
+                    for (StackTraceElementProxy st : cause.getStackTraceElementProxyArray()) {
+                        stacktrace.append(st.getSTEAsString());
+                        stacktrace.append('\n');
                     }
-
-                    // Go down the caused by chain
-                    IThrowableProxy cause = event.getThrowableProxy().getCause();
-                    while (cause != null) {
-                        stacktrace.write("Caused by: ");
-                        stacktrace.write(cause.getClassName());
-                        stacktrace.write(": ");
-                        stacktrace.write(Objects.toString(cause.getMessage(), ""));
-                        stacktrace.write("\n");
-                        for (StackTraceElementProxy st : cause.getStackTraceElementProxyArray()) {
-                            stacktrace.write(st.getSTEAsString());
-                            stacktrace.write('\n');
-                        }
-                        cause = cause.getCause();
-                    }
-
-                    messages.add(stacktrace.toString());
+                    cause = cause.getCause();
                 }
+
+                messages.add(stacktrace.toString());
             }
         }
 
@@ -161,7 +156,7 @@ public class SystemdJournalAppender extends AppenderBase<ILoggingEvent> {
         }
 
         if (logMdc) {
-            String normalizedKeyPrefix = normalizeKey(mdcKeyPrefix);
+            String normalizedKeyPrefix = normalizedMdcKeyPrefix;
             for (Map.Entry<String, String> entry : mdc.entrySet()) {
                 String key = entry.getKey();
                 if (key != null && !key.equals(SystemdJournal.MESSAGE_ID)) {
@@ -273,6 +268,7 @@ public class SystemdJournalAppender extends AppenderBase<ILoggingEvent> {
 
     public void setMdcKeyPrefix(String mdcKeyPrefix) {
         this.mdcKeyPrefix = mdcKeyPrefix;
+        this.normalizedMdcKeyPrefix = normalizeKey(mdcKeyPrefix);
     }
 
     public String getMdcKeyPrefix() {

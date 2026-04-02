@@ -1,10 +1,13 @@
 package com.dgkncgty.logback;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
@@ -365,6 +368,55 @@ public class SystemdJournalAppenderTest {
         newAppender.stop();
         // Stop should be idempotent
         newAppender.stop();
+    }
+
+    @Test
+    public void testExceptionFieldsPresentWithEmptyStackTrace() {
+        appender.setLogException(true);
+
+        Exception exception = new Exception("bug verification message") {
+            @Override
+            public synchronized Throwable fillInStackTrace() {
+                return this;
+            }
+        };
+
+        LoggingEvent event = createLoggingEvent(Level.ERROR, "error with empty stack", exception, new HashMap<>());
+        List<Object> fields = appender.buildJournalFields(event);
+
+        // logException=true, so EXN_NAME/EXN_MESSAGE must be present even
+        // when the exception has no stack trace elements.
+        assertThat(fields).contains("EXN_NAME=%s");
+        assertThat(fields).containsSequence("EXN_MESSAGE=%s", "bug verification message");
+    }
+
+    @Test
+    public void testExceptionFieldsAbsentWhenLogExceptionDisabled() {
+        appender.setLogException(false);
+
+        Exception exception = new Exception("should not appear");
+        LoggingEvent event = createLoggingEvent(Level.ERROR, "error message", exception, new HashMap<>());
+        List<Object> fields = appender.buildJournalFields(event);
+
+        assertThat(fields).doesNotContain("EXN_NAME=%s");
+        assertThat(fields).doesNotContain("EXN_MESSAGE=%s");
+    }
+
+    @Test
+    public void testStackTraceAbsentWithEmptyStackTrace() {
+        appender.setLogStackTrace(true);
+
+        Exception exception = new Exception("no frames") {
+            @Override
+            public synchronized Throwable fillInStackTrace() {
+                return this;
+            }
+        };
+
+        LoggingEvent event = createLoggingEvent(Level.ERROR, "error with empty stack", exception, new HashMap<>());
+        List<Object> fields = appender.buildJournalFields(event);
+
+        assertThat(fields).doesNotContain("EXN_STACKTRACE=%s");
     }
 
     // Helper method to create logging events
