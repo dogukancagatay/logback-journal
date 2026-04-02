@@ -21,7 +21,7 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.core.encoder.Encoder;
-import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +50,8 @@ public class SystemdJournalAppender extends AppenderBase<ILoggingEvent> {
 
     String mdcKeyPrefix = "";
 
+    private String normalizedMdcKeyPrefix = "";
+
     String syslogIdentifier = "";
 
     Encoder<ILoggingEvent> encoder = null;
@@ -57,113 +59,7 @@ public class SystemdJournalAppender extends AppenderBase<ILoggingEvent> {
     @Override
     protected void append(ILoggingEvent event) {
         try {
-            // get the message id if any
-            Map<String, String> mdc = event.getMDCPropertyMap();
-
-            List<Object> messages = new ArrayList<>();
-
-            // the formatted human readable message
-            if (encoder == null) messages.add(event.getFormattedMessage());
-            else {
-                String message = new String(encoder.encode(event));
-                messages.add(message);
-            }
-
-            // the log level
-            messages.add("PRIORITY=%i");
-            messages.add(levelToInt(event.getLevel()));
-
-            if (hasException(event)) {
-                StackTraceElementProxy[] stack = event.getThrowableProxy().getStackTraceElementProxyArray();
-                if (stack != null && stack.length > 0) {
-
-                    // the location information if any is available and it is
-                    // enabled
-                    if (logLocation) {
-                        StackTraceElement elt = stack[0].getStackTraceElement();
-                        appendLocation(messages, elt);
-                    }
-
-                    // if one wants to log the exception name and message, just
-                    // do it
-                    if (logException) {
-                        messages.add("EXN_NAME=%s");
-                        messages.add(event.getThrowableProxy().getClassName());
-                        messages.add("EXN_MESSAGE=%s");
-                        messages.add(event.getThrowableProxy().getMessage());
-                    }
-
-                    // if one wants to log the exception stack trace, just do it
-                    if (logStackTrace) {
-                        messages.add("EXN_STACKTRACE=%s");
-
-                        // The main exception
-                        StringWriter stacktrace = new StringWriter();
-                        for (StackTraceElementProxy st : stack) {
-                            stacktrace.write(st.getSTEAsString());
-                            stacktrace.write('\n');
-                        }
-
-                        // Go down the caused by chain
-                        IThrowableProxy cause = event.getThrowableProxy().getCause();
-                        while (cause != null) {
-                            stacktrace.write("Caused by: ");
-                            stacktrace.write(cause.getClassName());
-                            stacktrace.write(": ");
-                            stacktrace.write(Objects.toString(cause.getMessage(), ""));
-                            stacktrace.write("\n");
-                            for (StackTraceElementProxy st : cause.getStackTraceElementProxyArray()) {
-                                stacktrace.write(st.getSTEAsString());
-                                stacktrace.write('\n');
-                            }
-                            cause = cause.getCause();
-                        }
-
-                        messages.add(stacktrace.toString());
-                    }
-                }
-            }
-
-            // log thread name if enabled
-            if (logThreadName) {
-                messages.add("THREAD_NAME=%s");
-                messages.add(event.getThreadName());
-            }
-
-            // add a message id field if any is defined for this logging event
-            if (mdc.containsKey(SystemdJournal.MESSAGE_ID)) {
-                messages.add("MESSAGE_ID=%s");
-                messages.add(mdc.get(SystemdJournal.MESSAGE_ID));
-            }
-
-            // override the syslog identifier string if set
-            if (!syslogIdentifier.isEmpty()) {
-                messages.add("SYSLOG_IDENTIFIER=%s");
-                messages.add(syslogIdentifier);
-            }
-
-            if (logLoggerName) {
-                messages.add("LOGGER_NAME=%s");
-                messages.add(event.getLoggerName());
-            }
-
-            if (logMdc) {
-                String normalizedKeyPrefix = normalizeKey(mdcKeyPrefix);
-                for (Map.Entry<String, String> entry : mdc.entrySet()) {
-                    String key = entry.getKey();
-                    if (key != null && !key.equals(SystemdJournal.MESSAGE_ID)) {
-                        messages.add(normalizedKeyPrefix + normalizeKey(key) + "=%s");
-                        messages.add(entry.getValue());
-                    }
-                }
-            }
-
-            if (logSourceLocation && !hasException(event)) {
-                StackTraceElement[] callerData = event.getCallerData();
-                if (callerData != null && callerData.length >= 1) {
-                    appendLocation(messages, callerData[0]);
-                }
-            }
+            List<Object> messages = buildJournalFields(event);
 
             // the vararg list is null terminated
             messages.add(null);
@@ -174,6 +70,110 @@ public class SystemdJournalAppender extends AppenderBase<ILoggingEvent> {
         } catch (Exception e) {
             addError("Failed to append event to systemd journal", e);
         }
+    }
+
+    List<Object> buildJournalFields(ILoggingEvent event) {
+        Map<String, String> mdc = event.getMDCPropertyMap();
+
+        List<Object> messages = new ArrayList<>();
+
+        // the formatted human readable message
+        if (encoder == null) messages.add(event.getFormattedMessage());
+        else {
+            String message = new String(encoder.encode(event), StandardCharsets.UTF_8);
+            messages.add(message);
+        }
+
+        // the log level
+        messages.add("PRIORITY=%i");
+        messages.add(levelToInt(event.getLevel()));
+
+        if (hasException(event)) {
+            StackTraceElementProxy[] stack = event.getThrowableProxy().getStackTraceElementProxyArray();
+
+            // location requires at least one stack frame
+            if (logLocation && stack != null && stack.length > 0) {
+                appendLocation(messages, stack[0].getStackTraceElement());
+            }
+
+            // exception name and message are available regardless of stack depth
+            if (logException) {
+                messages.add("EXN_NAME=%s");
+                messages.add(event.getThrowableProxy().getClassName());
+                messages.add("EXN_MESSAGE=%s");
+                messages.add(event.getThrowableProxy().getMessage());
+            }
+
+            // stack trace is only meaningful when frames are present
+            if (logStackTrace && stack != null && stack.length > 0) {
+                messages.add("EXN_STACKTRACE=%s");
+
+                StringBuilder stacktrace = new StringBuilder();
+                for (StackTraceElementProxy st : stack) {
+                    stacktrace.append(st.getSTEAsString());
+                    stacktrace.append('\n');
+                }
+
+                IThrowableProxy cause = event.getThrowableProxy().getCause();
+                while (cause != null) {
+                    stacktrace.append("Caused by: ");
+                    stacktrace.append(cause.getClassName());
+                    stacktrace.append(": ");
+                    stacktrace.append(Objects.toString(cause.getMessage(), ""));
+                    stacktrace.append("\n");
+                    for (StackTraceElementProxy st : cause.getStackTraceElementProxyArray()) {
+                        stacktrace.append(st.getSTEAsString());
+                        stacktrace.append('\n');
+                    }
+                    cause = cause.getCause();
+                }
+
+                messages.add(stacktrace.toString());
+            }
+        }
+
+        // log thread name if enabled
+        if (logThreadName) {
+            messages.add("THREAD_NAME=%s");
+            messages.add(event.getThreadName());
+        }
+
+        // add a message id field if any is defined for this logging event
+        if (mdc.containsKey(SystemdJournal.MESSAGE_ID)) {
+            messages.add("MESSAGE_ID=%s");
+            messages.add(mdc.get(SystemdJournal.MESSAGE_ID));
+        }
+
+        // override the syslog identifier string if set
+        if (!syslogIdentifier.isEmpty()) {
+            messages.add("SYSLOG_IDENTIFIER=%s");
+            messages.add(syslogIdentifier);
+        }
+
+        if (logLoggerName) {
+            messages.add("LOGGER_NAME=%s");
+            messages.add(event.getLoggerName());
+        }
+
+        if (logMdc) {
+            String normalizedKeyPrefix = normalizedMdcKeyPrefix;
+            for (Map.Entry<String, String> entry : mdc.entrySet()) {
+                String key = entry.getKey();
+                if (key != null && !key.equals(SystemdJournal.MESSAGE_ID)) {
+                    messages.add(normalizedKeyPrefix + normalizeKey(key) + "=%s");
+                    messages.add(entry.getValue());
+                }
+            }
+        }
+
+        if (logSourceLocation && !hasException(event)) {
+            StackTraceElement[] callerData = event.getCallerData();
+            if (callerData != null && callerData.length >= 1) {
+                appendLocation(messages, callerData[0]);
+            }
+        }
+
+        return messages;
     }
 
     private boolean hasException(ILoggingEvent event) {
@@ -268,6 +268,7 @@ public class SystemdJournalAppender extends AppenderBase<ILoggingEvent> {
 
     public void setMdcKeyPrefix(String mdcKeyPrefix) {
         this.mdcKeyPrefix = mdcKeyPrefix;
+        this.normalizedMdcKeyPrefix = normalizeKey(mdcKeyPrefix);
     }
 
     public String getMdcKeyPrefix() {
